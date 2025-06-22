@@ -50,6 +50,15 @@ export default function EmailTemplate({
   type = "monthly-report",
   data = {},
 }) {
+  // Ensure defensive defaults
+  const stats = data?.stats ?? { totalIncome: 0, totalExpenses: 0, byCategory: {} };
+  const totalIncome = stats.totalIncome ?? 0;
+  const totalExpenses = stats.totalExpenses ?? 0;
+  const net = totalIncome - totalExpenses;
+  const byCategory = stats.byCategory ?? {};
+  const month = data?.month ?? "";
+  const insights = data?.insights ?? [];
+
   if (type === "monthly-report") {
     return (
       <Html>
@@ -61,47 +70,43 @@ export default function EmailTemplate({
 
             <Text style={styles.text}>Hello {userName},</Text>
             <Text style={styles.text}>
-              Here&rsquo;s your financial summary for {data?.month}:
+              Here&rsquo;s your financial summary for {month}:
             </Text>
 
             {/* Main Stats */}
             <Section style={styles.statsContainer}>
               <div style={styles.stat}>
                 <Text style={styles.text}>Total Income</Text>
-                <Text style={styles.heading}>${data?.stats.totalIncome}</Text>
+                <Text style={styles.heading}>Rs. {totalIncome}</Text>
               </div>
               <div style={styles.stat}>
                 <Text style={styles.text}>Total Expenses</Text>
-                <Text style={styles.heading}>${data?.stats.totalExpenses}</Text>
+                <Text style={styles.heading}>Rs.{totalExpenses}</Text>
               </div>
               <div style={styles.stat}>
                 <Text style={styles.text}>Net</Text>
-                <Text style={styles.heading}>
-                  ${data?.stats.totalIncome - data?.stats.totalExpenses}
-                </Text>
+                <Text style={styles.heading}>Rs.{net}</Text>
               </div>
             </Section>
 
             {/* Category Breakdown */}
-            {data?.stats?.byCategory && (
+            {Object.keys(byCategory).length > 0 && (
               <Section style={styles.section}>
                 <Heading style={styles.heading}>Expenses by Category</Heading>
-                {Object.entries(data?.stats.byCategory).map(
-                  ([category, amount]) => (
-                    <div key={category} style={styles.row}>
-                      <Text style={styles.text}>{category}</Text>
-                      <Text style={styles.text}>${amount}</Text>
-                    </div>
-                  )
-                )}
+                {Object.entries(byCategory).map(([category, amount]) => (
+                  <div key={category} style={styles.row}>
+                    <Text style={styles.text}>{category}</Text>
+                    <Text style={styles.text}>Rs.{amount}</Text>
+                  </div>
+                ))}
               </Section>
             )}
 
             {/* AI Insights */}
-            {data?.insights && (
+            {insights.length > 0 && (
               <Section style={styles.section}>
-                <Heading style={styles.heading}>Welth Insights</Heading>
-                {data.insights.map((insight, index) => (
+                <Heading style={styles.heading}>Wealth Insights</Heading>
+                {insights.map((insight, index) => (
                   <Text key={index} style={styles.text}>
                     • {insight}
                   </Text>
@@ -110,7 +115,7 @@ export default function EmailTemplate({
             )}
 
             <Text style={styles.footer}>
-              Thank you for using Welth. Keep tracking your finances for better
+              Thank you for using Wealth. Keep tracking your finances for better
               financial health!
             </Text>
           </Container>
@@ -118,6 +123,12 @@ export default function EmailTemplate({
       </Html>
     );
   }
+
+  // Budget alert values (with defensive fallback)
+  const percentageUsed = Number(data?.percentageUsed ?? 0);
+  const budgetAmount = Number(data?.budgetAmount ?? 0);
+  const spent = Number(data?.totalExpenses ?? 0);
+  const remaining = budgetAmount - spent;
 
   if (type === "budget-alert") {
     return (
@@ -129,23 +140,21 @@ export default function EmailTemplate({
             <Heading style={styles.title}>Budget Alert</Heading>
             <Text style={styles.text}>Hello {userName},</Text>
             <Text style={styles.text}>
-              You&rsquo;ve used {data?.percentageUsed.toFixed(1)}% of your
+              You&rsquo;ve used {percentageUsed.toFixed(1)}% of your
               monthly budget.
             </Text>
             <Section style={styles.statsContainer}>
               <div style={styles.stat}>
                 <Text style={styles.text}>Budget Amount</Text>
-                <Text style={styles.heading}>${data?.budgetAmount}</Text>
+                <Text style={styles.heading}>Rs.{budgetAmount}</Text>
               </div>
               <div style={styles.stat}>
                 <Text style={styles.text}>Spent So Far</Text>
-                <Text style={styles.heading}>${data?.totalExpenses}</Text>
+                <Text style={styles.heading}>Rs.{spent}</Text>
               </div>
               <div style={styles.stat}>
                 <Text style={styles.text}>Remaining</Text>
-                <Text style={styles.heading}>
-                  ${data?.budgetAmount - data?.totalExpenses}
-                </Text>
+                <Text style={styles.heading}>Rs.{remaining}</Text>
               </div>
             </Section>
           </Container>
